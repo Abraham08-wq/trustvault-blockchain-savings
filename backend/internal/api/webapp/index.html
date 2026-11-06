@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050C1C">
+<meta name="description" content="Your savings group, protected. No one can move the group's money alone.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ChamaChain">
+<title>ChamaChain</title>
+<link rel="manifest" href="/app/manifest.webmanifest">
+<link rel="icon" href="/app/icon-192.png">
+<link rel="apple-touch-icon" href="/app/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap">
+<style nonce="{{NONCE}}">
+:root{
+  --abyss:#050C1C; --deep:#0A1734; --panel:#0E1F45; --rule:#1C3566; --rule-hi:#27477F;
+  --text:#DCE6FF; --muted:#8396C0; --faint:#4A5F8C;
+  --signal:#4CC9FF; --safe:#3BE8A8; --alert:#FF5C78; --caution:#FFB443;
+  --sans:"Sora",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--abyss);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body{min-height:100dvh;background-image:radial-gradient(700px 380px at 90% -8%,rgba(76,201,255,.08),transparent 65%)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.hidden{display:none !important}
+.muted{color:var(--muted)}
+
+/* layout */
+.shell{max-width:560px;margin:0 auto;padding:calc(var(--safe-top) + 8px) 16px calc(var(--safe-bottom) + 32px)}
+header.bar{display:flex;align-items:center;gap:10px;height:56px}
+header.bar .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;flex:1;min-width:0}
+header.bar .back{display:none}
+.iconbtn{position:relative;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;border:1px solid transparent;background:none;cursor:pointer}
+.iconbtn:active{background:var(--deep)}
+.iconbtn svg{width:24px;height:24px}
+.badge{position:absolute;top:4px;right:4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--caution);color:#1d1100;font-size:11px;font-weight:700;display:grid;place-items:center}
+
+/* type */
+h1.title{font-size:28px;font-weight:300;margin:12px 0 4px;letter-spacing:-.01em}
+p.lead{color:var(--muted);margin:0 0 24px}
+h2.section{font-size:18px;font-weight:600;margin:32px 0 4px}
+p.sectionnote{color:var(--muted);font-size:13px;margin:0 0 12px}
+
+/* controls */
+label.f{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}
+input.in{width:100%;background:var(--abyss);border:1px solid var(--rule-hi);border-radius:12px;padding:14px;font-size:17px;outline:none}
+input.in:focus{border-color:var(--signal)}
+input.code{font-size:30px;letter-spacing:.45em;text-align:center;font-weight:600;padding:12px 0 12px .45em}
+.prefixed{display:flex;align-items:center;border:1px solid var(--rule-hi);border-radius:12px;background:var(--abyss)}
+.prefixed:focus-within{border-color:var(--signal)}
+.prefixed span{padding-left:14px;color:var(--muted);font-weight:600}
+.prefixed input{border:none;background:none;font-size:22px;font-weight:600}
+.help{font-size:13px;color:var(--muted);margin:6px 0 0}
+.err{color:var(--alert);font-size:14px;min-height:20px;margin:8px 0}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;border-radius:14px;border:1px solid var(--rule-hi);background:transparent;font-weight:600;font-size:16px;cursor:pointer}
+.btn.primary{background:var(--signal);border-color:var(--signal);color:#021022}
+.btn.safe{background:var(--safe);border-color:var(--safe);color:#02150E}
+.btn.danger{border-color:var(--alert);color:var(--alert)}
+.btn:disabled{opacity:.45}
+.btn.link{border:none;min-height:44px;color:var(--signal);font-weight:500}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.spin{width:20px;height:20px;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* panels */
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:16px;padding:18px}
+.panel.tap{cursor:pointer;display:block;width:100%;text-align:left}
+.panel.tap:active{border-color:var(--rule-hi)}
+.panel.accent{border-left-width:3px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid}
+.tag.caution{color:var(--caution);border-color:rgba(255,180,67,.5);background:rgba(255,180,67,.1)}
+.tag.muted{color:var(--muted);border-color:var(--rule-hi)}
+.tag.alert{color:var(--alert);border-color:rgba(255,92,120,.5);background:rgba(255,92,120,.1)}
+.tag.signal{color:var(--signal);border-color:rgba(76,201,255,.5);background:rgba(76,201,255,.08)}
+
+/* group card */
+.gcard .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.gcard .name{font-weight:600;font-size:17px}
+.big{font-size:32px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.15}
+.big small{font-size:15px;font-weight:400;color:var(--muted);margin-right:6px}
+.saved{display:flex;align-items:center;gap:8px;margin-top:12px;color:var(--text)}
+.saved svg{color:var(--safe);flex:none}
+
+/* votes banner */
+.banner{display:flex;align-items:center;gap:14px;border-left:3px solid var(--caution)}
+.banner b{flex:1}
+
+/* group view */
+.hero{margin:8px 0 18px}
+.hero .big{font-size:40px}
+.figs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fig{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:14px}
+.fig .v{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+.fig .v.safe{color:var(--safe)}
+.fig .k{font-size:12px;color:var(--muted)}
+
+/* integrity seal: the app's one animated moment */
+.seal{display:flex;gap:14px;align-items:flex-start;margin:12px 0 16px}
+.seal svg{width:40px;height:44px;flex:none}
+.seal .s-outline{fill:none;stroke-width:3;stroke-linejoin:round}
+.seal .s-tick{fill:none;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:30;stroke-dashoffset:30}
+.seal.ok{border-left-color:var(--safe)} .seal.ok .s-outline{stroke:var(--safe)} .seal.ok .s-tick{stroke:var(--safe);animation:draw .7s .15s ease forwards}
+.seal.ok b{color:var(--safe)}
+.seal.bad{border-left-color:var(--alert)} .seal.bad .s-outline{stroke:var(--alert);fill:rgba(255,92,120,.12)} .seal.bad b{color:var(--alert)}
+.seal.wait{border-left-color:var(--caution)} .seal.wait .s-outline{stroke:var(--caution)} .seal.wait b{color:var(--caution)}
+.seal.checking .s-outline{stroke:var(--signal);animation:pulse 1s infinite}
+.seal b{display:block;font-size:15px}
+.seal p{margin:4px 0 0;font-size:14px;color:var(--text)}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pulse{50%{opacity:.35}}
+
+.rule-note{color:var(--muted);font-size:13px;margin:10px 0 0}
+
+/* requests & activity */
+.req{display:flex;align-items:center;gap:10px}
+.req .main{flex:1;min-width:0}
+.req .btn.link{width:auto;flex:none;padding:0 6px}
+.req .amt{font-weight:600;font-size:17px}
+.req .st{font-size:13px}
+.st.pending{color:var(--caution)} .st.executed{color:var(--safe)} .st.rejected{color:var(--alert)} .st.cancelled{color:var(--muted)}
+.act{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--rule)}
+.act .dot{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex:none}
+.act .dot.in{background:rgba(59,232,168,.13);color:var(--safe)}
+.act .dot.out{background:rgba(255,180,67,.13);color:var(--caution)}
+.act .what{flex:1;min-width:0}
+.act .what div:first-child{font-weight:500}
+.act .meta{font-size:12px;color:var(--muted);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.act .amt{font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.act .amt.in{color:var(--safe)} .act .amt.out{color:var(--caution)}
+
+/* vote card */
+.vote .grp{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:14px}
+.vote .big{margin:10px 0 4px}
+.vote .who{margin:0}
+.vote .why{color:var(--muted);margin:6px 0 0;font-size:14px}
+.flags{margin-top:12px;border-radius:12px;padding:12px}
+.flags.high{background:rgba(255,92,120,.08)} .flags.medium{background:rgba(255,180,67,.08)} .flags.low{background:rgba(76,201,255,.06)}
+.flags b{font-size:13px}
+.flags.high b{color:var(--alert)} .flags.medium b{color:var(--caution)} .flags.low b{color:var(--signal)}
+.flags ul{margin:6px 0 0;padding-left:18px;font-size:14px}
+.flags li{margin:3px 0}
+.tally{color:var(--muted);font-size:14px;margin:12px 0}
+
+/* sheets */
+dialog.sheet{position:fixed;inset:auto 0 0 0;margin:0 auto;width:100%;max-width:560px;max-height:92dvh;border:none;border-radius:22px 22px 0 0;padding:8px 20px calc(var(--safe-bottom) + 20px);background:var(--deep);color:var(--text);overflow:auto}
+dialog.sheet[open]{animation:up .28s cubic-bezier(.2,.8,.2,1)}
+dialog.sheet::backdrop{background:rgba(2,6,16,.72)}
+dialog.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--rule-hi);margin:6px auto 14px}
+dialog.sheet h3{font-size:22px;font-weight:600;margin:0 0 6px}
+dialog.sheet p.d{color:var(--muted);margin:0 0 20px}
+dialog.sheet .fld{margin-bottom:16px}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+
+/* toast & offline */
+#toast{position:fixed;left:16px;right:16px;bottom:calc(var(--safe-bottom) + 16px);max-width:528px;margin:0 auto;background:var(--panel);border:1px solid var(--rule-hi);border-left:3px solid var(--safe);border-radius:12px;padding:14px 16px;z-index:50;transition:opacity .25s,transform .25s}
+#toast.bad{border-left-color:var(--alert)}
+#toast.off{opacity:0;transform:translateY(12px);pointer-events:none}
+#offline{background:rgba(255,180,67,.12);color:var(--caution);text-align:center;font-size:14px;padding:8px;border-radius:10px;margin-bottom:8px}
+
+.empty{text-align:center;padding:28px 18px}
+.empty svg{color:var(--safe);width:40px;height:40px}
+.loading{display:grid;place-items:center;padding:60px 0;color:var(--muted)}
+.warnbox{color:var(--text);font-size:13px;margin-top:28px;line-height:1.5;color:var(--muted)}
+.install p{margin:4px 0 12px;color:var(--muted);font-size:14px}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none !important;transition:none !important}.seal .s-tick{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="bar">
+    <button class="iconbtn back" id="backBtn" type="button" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="brand">
+      <svg width="22" height="24" viewBox="0 0 22 24" aria-hidden="true"><path d="M11 1 2 4.5v6.7c0 5.6 3.8 10.3 9 11.8 5.2-1.5 9-6.2 9-11.8V4.5L11 1Z" fill="none" stroke="#4CC9FF" stroke-width="1.8"/><path d="m6.5 12 3 3 6-6" fill="none" stroke="#3BE8A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span id="barTitle">ChamaChain</span>
+    </div>
+    <button class="iconbtn hidden" id="votesBtn" type="button" aria-label="Withdrawals waiting for your vote">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>
+      <span class="badge hidden" id="votesBadge"></span>
+    </button>
+    <button class="iconbtn hidden" id="menuBtn" type="button" aria-label="Sign out">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+    </button>
+  </header>
+  <div id="offline" class="hidden" role="status">You are offline. Balances will update when you reconnect.</div>
+  <main id="view" aria-live="polite"></main>
+</div>
+
+<dialog class="sheet" id="sheet"><div class="grab" aria-hidden="true"></div><div id="sheetBody"></div></dialog>
+<div id="toast" class="off" role="status" aria-live="polite"></div>
+
+<script nonce="{{NONCE}}">
+"use strict";
+(() => {
+const $ = (s, r = document) => r.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+
+/* Safe DOM builder: every piece of text goes through textContent. */
+function el(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") n.className = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) n.append(k instanceof Node ? k : document.createTextNode(String(k)));
+  return n;
+}
+function icon(d, size = 20) {
+  const s = document.createElementNS(NS, "svg");
+  s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("width", size); s.setAttribute("height", size);
+  s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "2");
+  s.setAttribute("stroke-linecap", "round"); s.setAttribute("stroke-linejoin", "round"); s.setAttribute("aria-hidden", "true");
+  for (const p of d.split("|")) { const e = document.createElementNS(NS, "path"); e.setAttribute("d", p); s.append(e); }
+  return s;
+}
+const ICON = {
+  savings: "M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z|M2 9v1c0 1.1.9 2 2 2h1",
+  in: "M17 7 7 17|M17 17H7V7",
+  out: "M7 17 17 7|M7 7h10v10",
+  check: "M20 6 9 17l-5-5",
+};
+
+/* ---------- API ---------- */
+class AuthError extends Error {}
+async function api(path, body) {
+  let res;
+  try {
+    res = await fetch(path, {
+      method: body ? "POST" : "GET",
+      credentials: "same-origin",
+      headers: Object.assign({ "X-Requested-With": "chamachain", "X-Client": "web" }, body ? { "Content-Type": "application/json" } : {}),
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new Error("Cannot reach ChamaChain. Check your internet connection.");
+  }
+  let data = null;
+  try { data = await res.json(); } catch {}
+  if (res.status === 401 && !path.startsWith("/auth/")) throw new AuthError("Please sign in again.");
+  if (!res.ok) throw new Error(clean(data && data.error) || `Something went wrong (${res.status}).`);
+  return data;
+}
+function clean(s) {
+  if (!s) return "";
+  s = s.replace(/^(validation failed|conflict|forbidden|not found|unauthorized): ?/i, "");
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/* ---------- formatting ---------- */
+const nf = new Intl.NumberFormat("en-KE");
+const money = (n, cur) => `${cur} ${nf.format(Math.round(n))}`;
+function when(t) {
+  const d = new Date(t);
+  return d.toLocaleDateString("en-KE", { day: "numeric", month: "short" }) + ", " + d.toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" });
+}
+/* 254712345678 -> 0712 345 678 (Kenyan numbers); other countries keep the + format */
+function phoneFmt(p) {
+  p = String(p || "");
+  if (/^254\d{9}$/.test(p)) return `0${p.slice(3, 6)} ${p.slice(6, 9)} ${p.slice(9)}`;
+  return /^\d+$/.test(p) ? "+" + p : p;
+}
+const roleName = r => ({ chair: "Chair", treasurer: "Treasurer", secretary: "Secretary" }[r] || "Member");
+const first = n => (n || "").split(/\s+/)[0];
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function countUp(node, to, fmt) {
+  if (reduce) { node.textContent = fmt(to); return; }
+  const t0 = performance.now(), d = 650;
+  const step = t => { const p = Math.min(1, (t - t0) / d); node.textContent = fmt(to * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg, bad) {
+  const t = $("#toast");
+  t.textContent = msg; t.className = bad ? "bad" : "";
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.add("off"), 4200);
+}
+
+/* ---------- state & routing ---------- */
+const state = { me: null, phone: "", pendingCode: false, testMode: false };
+const view = $("#view");
+
+function setBar({ title = "ChamaChain", back = false, signedIn = true } = {}) {
+  $("#barTitle").textContent = title;
+  $("#backBtn").style.display = back ? "grid" : "none";
+  $("#votesBtn").classList.toggle("hidden", !signedIn);
+  $("#menuBtn").classList.toggle("hidden", !signedIn);
+}
+function setVotes(n) {
+  const b = $("#votesBadge");
+  b.textContent = String(n); b.classList.toggle("hidden", !n);
+}
+$("#backBtn").addEventListener("click", () => { location.hash = ""; });
+$("#votesBtn").addEventListener("click", () => { location.hash = "#votes"; });
+$("#menuBtn").addEventListener("click", () => openSheet(signOutSheet()));
+
+function loading() { view.replaceChildren(el("div", { class: "loading" }, el("div", { class: "spin" }))); }
+
+async function route() {
+  closeSheet();
+  const h = location.hash;
+  try {
+    if (h.startsWith("#group/")) return await showGroup(decodeURIComponent(h.slice(7)));
+    if (h === "#votes") return await showVotes();
+    return await showHome();
+  } catch (e) {
+    if (e instanceof AuthError) return showLogin();
+    view.replaceChildren(el("div", { class: "panel accent", style: null }, e.message,
+      el("button", { class: "btn link", type: "button", onclick: route }, "Try again")));
+  }
+}
+addEventListener("hashchange", route);
+
+/* ---------- sign in ---------- */
+function showLogin(msg) {
+  setBar({ signedIn: false });
+  const phone = el("input", { class: "in", id: "phone", type: "tel", inputmode: "tel", autocomplete: "tel", placeholder: "0712 345 678", value: state.phone });
+  const code = el("input", { class: "in code", id: "code", inputmode: "numeric", autocomplete: "one-time-code", maxlength: "6", pattern: "[0-9]*" });
+  const err = el("div", { class: "err", role: "alert" }, msg || "");
+  const go = el("button", { class: "btn primary", type: "submit" }, state.pendingCode ? "Sign in" : "Send code");
+
+  const form = el("form", { onsubmit: async e => {
+    e.preventDefault(); err.textContent = ""; go.disabled = true;
+    const label = go.textContent; go.replaceChildren(el("span", { class: "spin" }));
+    try {
+      if (!state.pendingCode) {
+        state.phone = phone.value.trim();
+        if (!/^\+?[0-9\s-]{9,18}$/.test(state.phone)) throw new Error("Enter your phone number, for example 0712 345 678");
+        const r = await api("/auth/otp/request", { phone: state.phone });
+        state.pendingCode = true; state.testMode = !!r.test_mode;
+        showLogin();
+        return;
+      }
+      if (!/^[0-9]{6}$/.test(code.value)) throw new Error("Enter the 6-digit code from the SMS");
+      await api("/auth/otp/verify", { phone: state.phone, code: code.value, device: "web app" });
+      state.pendingCode = false;
+      location.hash = ""; route();
+    } catch (ex) {
+      err.textContent = ex.message; go.textContent = label;
+      if (state.pendingCode) { code.value = ""; code.focus(); }
+    } finally { go.disabled = false; }
+  }},
+    !state.pendingCode
+      ? el("div", {}, el("label", { class: "f", for: "phone" }, "Phone number"), phone)
+      : el("div", {}, el("label", { class: "f", for: "code" }, "6-digit code"), code),
+    err, go,
+    state.pendingCode ? el("button", { class: "btn link", type: "button", onclick: () => { state.pendingCode = false; showLogin(); } }, "Use a different number or resend the code") : null,
+  );
+  code.addEventListener("input", () => { code.value = code.value.replace(/\D/g, "").slice(0, 6); if (code.value.length === 6) form.requestSubmit(); });
+
+  view.replaceChildren(
+    el("h1", { class: "title" }, state.pendingCode ? "Enter your code" : "Sign in"),
+    el("p", { class: "lead" }, state.pendingCode
+      ? (state.testMode ? `SMS is in test mode on this server, so ask your group official for the code sent to ${state.phone}.` : `We sent a 6-digit code to ${state.phone}. It expires in 5 minutes.`)
+      : "Use the phone number registered with your savings group. We will text you a one-time code."),
+    form,
+    el("p", { class: "warnbox" }, "ChamaChain will never ask for your M-Pesa PIN or this code by phone call or message. Do not share them with anyone, including group officials."),
+  );
+  (state.pendingCode ? code : phone).focus();
+}
+
+/* ---------- home ---------- */
+async function showHome() {
+  setBar();
+  if (!state.me) loading();
+  const me = await api("/me");
+  state.me = me; setVotes(me.pending_approvals);
+  const kids = [
+    el("h1", { class: "title" }, me.name ? `Hello, ${first(me.name)}` : "Welcome"),
+    el("p", { class: "lead" }, me.groups.length === 1 ? "Your savings group" : `Your ${me.groups.length} savings groups`),
+  ];
+  const list = el("div", { class: "stack" });
+  if (me.pending_approvals > 0) {
+    list.append(el("button", { class: "panel tap banner", type: "button", onclick: () => { location.hash = "#votes"; } },
+      el("b", {}, me.pending_approvals === 1 ? "1 withdrawal is waiting for your vote" : `${me.pending_approvals} withdrawals are waiting for your vote`),
+      el("span", { class: "tag caution" }, "Vote")));
+  }
+  if (!me.groups.length) list.append(el("div", { class: "panel" }, "You are not an active member of any group yet. Ask your group official to add this phone number."));
+  for (const g of me.groups) {
+    const bal = el("span", {}, "0");
+    list.append(el("button", { class: "panel tap gcard", type: "button", onclick: () => { location.hash = "#group/" + encodeURIComponent(g.group_id); } },
+      el("div", { class: "top" }, el("span", { class: "name" }, g.group_name),
+        g.pending_for_me ? el("span", { class: "tag caution" }, `${g.pending_for_me} to vote`) : el("span", { class: "tag muted" }, roleName(g.role))),
+      el("div", { class: "big", style: null }, el("small", {}, g.currency), bal),
+      el("div", { class: "muted" }, "Group balance"),
+      el("div", { class: "saved" }, icon(ICON.savings, 18), `You have saved ${money(g.my_contributions, g.currency)}`)));
+    countUp(bal, g.balance, v => nf.format(Math.round(v)));
+  }
+  kids.push(list);
+  const inst = installCard(); if (inst) kids.push(inst);
+  view.replaceChildren(...kids);
+}
+
+/* ---------- group ---------- */
+async function showGroup(id) {
+  setBar({ back: true });
+  loading();
+  const [g, act, wds, ver] = await Promise.all([
+    api(`/me/groups/${id}`), api(`/me/groups/${id}/activity`), api(`/me/groups/${id}/withdrawals`), api(`/me/groups/${id}/verify`).catch(() => null),
+  ]);
+  setBar({ back: true, title: g.group_name });
+  const mine = wds.filter(w => w.requested_by === g.member_id);
+  const bal = el("span", {}, "0");
+  const kids = [
+    el("div", { class: "hero" }, el("div", { class: "big" }, el("small", {}, g.currency), bal), el("div", { class: "muted" }, "Group balance")),
+    el("div", { class: "figs" },
+      el("div", { class: "fig" }, el("div", { class: "v safe" }, money(g.my_contributions, g.currency)), el("div", { class: "k" }, "You have saved")),
+      el("div", { class: "fig" }, el("div", { class: "v" }, money(g.available, g.currency)), el("div", { class: "k" }, "Available to lend"))),
+    seal(ver),
+    el("div", { class: "row2" },
+      el("button", { class: "btn primary", type: "button", onclick: () => openSheet(contributeSheet(g)) }, "Contribute"),
+      el("button", { class: "btn", type: "button", onclick: () => openSheet(withdrawSheet(g)) }, "Request money")),
+    el("p", { class: "rule-note" }, `Every withdrawal needs ${g.approval_threshold} approval${g.approval_threshold > 1 ? "s" : ""} from other members. Nobody can approve their own request.`),
+  ];
+  if (mine.length) {
+    kids.push(el("h2", { class: "section" }, "Your requests"));
+    const s = el("div", { class: "stack" });
+    for (const w of mine.slice(0, 8)) {
+      const label = { pending: `${w.approvals.length} of ${w.required_approvals} approvals`, executed: "Paid out", rejected: "Rejected by members", cancelled: "Cancelled" }[w.status] || w.status;
+      s.append(el("div", { class: "panel req" },
+        el("div", { class: "main" }, el("div", { class: "amt" }, money(w.amount, g.currency)), el("div", { class: "st " + w.status }, `${label}, ${when(w.created_at)}`)),
+        w.status === "pending" ? el("button", { class: "btn link", type: "button", onclick: async ev => {
+          ev.currentTarget.disabled = true;
+          try { await api(`/me/withdrawals/${w.id}/cancel`, {}); toast("Request cancelled"); route(); } catch (e) { toast(e.message, true); ev.currentTarget.disabled = false; }
+        } }, "Cancel") : null));
+    }
+    kids.push(s);
+  }
+  kids.push(el("h2", { class: "section" }, "Group activity"),
+    el("p", { class: "sectionnote" }, "Every record is linked to the one before it, so past entries cannot be changed quietly."));
+  if (!act.length) kids.push(el("div", { class: "panel" }, "No contributions yet. Be the first."));
+  for (const a of act) {
+    const inflow = a.amount >= 0, who = a.mine ? "You" : (a.who || "A member");
+    kids.push(el("div", { class: "act" },
+      el("div", { class: "dot " + (inflow ? "in" : "out") }, icon(inflow ? ICON.in : ICON.out, 18)),
+      el("div", { class: "what" }, el("div", {}, inflow ? `${who} contributed` : `Paid out for ${who === "You" ? "you" : who}`),
+        el("div", { class: "meta" }, `#${a.seq}  ${(a.hash || "").slice(0, 10)}  ${when(a.created_at)}`)),
+      el("div", { class: "amt " + (inflow ? "in" : "out") }, (inflow ? "+ " : "− ") + money(Math.abs(a.amount), g.currency))));
+  }
+  view.replaceChildren(...kids);
+  countUp(bal, g.balance, v => nf.format(Math.round(v)));
+}
+
+function seal(v) {
+  let cls = "wait", title = "Waiting for the blockchain", body = "The newest records will be sealed on the blockchain shortly.";
+  if (!v) { cls = "checking"; title = "Checking the records"; body = "Could not reach the record check right now."; }
+  else if (!v.valid) {
+    cls = "bad"; title = "Records have been tampered with";
+    body = v.broken_at_seq ? `Record ${v.broken_at_seq} was changed after it was saved. Tell your group officials immediately.` : "The records no longer match the blockchain. Tell your group officials immediately.";
+  } else if (v.entries === 0) { cls = "ok"; title = "Records verified"; body = "No records yet."; }
+  else if (v.anchor_source === "blockchain" && v.anchor_matches) { cls = "ok"; title = "Records verified"; body = `All ${v.entries} records match the copy sealed on the blockchain.`; }
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 40 44"); svg.setAttribute("aria-hidden", "true");
+  const o = document.createElementNS(NS, "path"); o.setAttribute("class", "s-outline");
+  o.setAttribute("d", "M20 2 3 8.5v12C3 31 10 39.5 20 42c10-2.5 17-11 17-21.5v-12L20 2Z");
+  const t = document.createElementNS(NS, "path"); t.setAttribute("class", "s-tick"); t.setAttribute("d", "m12 22 6 6 11-12");
+  svg.append(o); if (cls === "ok") svg.append(t);
+  return el("div", { class: "panel accent seal " + cls, role: "status" }, svg, el("div", {}, el("b", {}, title), el("p", {}, body)));
+}
+
+/* ---------- votes ---------- */
+async function showVotes() {
+  setBar({ back: true, title: "Your votes" });
+  loading();
+  const list = await api("/me/approvals");
+  setVotes(list.length);
+  if (!list.length) {
+    view.replaceChildren(el("div", { class: "panel empty" }, icon(ICON.check, 40),
+      el("h2", { class: "section" }, "Nothing waiting for your vote"),
+      el("p", { class: "muted" }, "When a member asks for money, it appears here for you to approve or reject.")));
+    return;
+  }
+  const s = el("div", { class: "stack" });
+  for (const w of list) {
+    const level = w.risk_level || "low";
+    const tagCls = { high: "alert", medium: "caution", low: "signal" }[level];
+    const color = { high: "var(--alert)", medium: "var(--caution)", low: "var(--signal)" }[level];
+    const card = el("div", { class: "panel accent vote" },
+      el("div", { class: "grp" }, el("span", {}, w.group_name), el("span", { class: "tag " + tagCls }, { high: "High risk", medium: "Medium risk", low: "Low risk" }[level])),
+      el("div", { class: "big" }, money(w.amount, w.currency)),
+      el("p", { class: "who" }, `${w.requester_name} (${roleName(w.requester_role)}) asks to send it to ${phoneFmt(w.recipient_phone)}`),
+      w.reason ? el("p", { class: "why" }, `Reason: ${w.reason}`) : null,
+      w.risk_reasons.length ? el("div", { class: "flags " + level }, el("b", {}, level === "low" ? "What our fraud check noticed" : "Why our fraud check flagged it"), el("ul", {}, w.risk_reasons.map(r => el("li", {}, r)))) : null,
+      el("div", { class: "tally" }, `${w.approvals.length} of ${w.required_approvals} approvals so far`),
+      el("div", { class: "row2" },
+        el("button", { class: "btn danger", type: "button", onclick: () => openSheet(voteSheet(w, false)) }, "Reject"),
+        el("button", { class: "btn safe", type: "button", onclick: () => openSheet(voteSheet(w, true)) }, "Approve")));
+    card.style.borderLeftColor = color;
+    s.append(card);
+  }
+  view.replaceChildren(s);
+}
+
+/* ---------- sheets ---------- */
+function openSheet(content) { $("#sheetBody").replaceChildren(content); const d = $("#sheet"); if (!d.open) d.showModal(); }
+function closeSheet() { const d = $("#sheet"); if (d.open) d.close(); }
+$("#sheet").addEventListener("click", e => { if (e.target === e.currentTarget) closeSheet(); });
+
+function sheetForm(title, desc, fields, action, run, cls = "primary") {
+  const err = el("div", { class: "err", role: "alert" });
+  const btn = el("button", { class: "btn " + cls, type: "submit" }, action);
+  return el("form", { onsubmit: async e => {
+    e.preventDefault(); err.textContent = ""; btn.disabled = true;
+    btn.replaceChildren(el("span", { class: "spin" }));
+    try { await run(); closeSheet(); }
+    catch (ex) { if (ex instanceof AuthError) return showLogin(); err.textContent = ex.message; }
+    finally { btn.disabled = false; btn.textContent = action; }
+  }},
+    el("h3", {}, title), el("p", { class: "d" }, desc), ...fields, err, btn,
+    el("button", { class: "btn link", type: "button", onclick: closeSheet }, "Not now"));
+}
+function amountField(id, cur, help) {
+  const inp = el("input", { id, inputmode: "numeric", autocomplete: "off", placeholder: "0" });
+  inp.addEventListener("input", () => { inp.value = inp.value.replace(/\D/g, ""); });
+  return { inp, node: el("div", { class: "fld" }, el("label", { class: "f", for: id }, "Amount"),
+    el("div", { class: "prefixed" }, el("span", {}, cur), inp), help ? el("p", { class: "help" }, help) : null) };
+}
+
+function contributeSheet(g) {
+  const a = amountField("cAmt", g.currency);
+  setTimeout(() => a.inp.focus(), 50);
+  return sheetForm("Contribute through M-Pesa", "You will get an M-Pesa prompt on this phone. Enter your PIN there to complete the payment.",
+    [a.node], "Send M-Pesa prompt", async () => {
+      const amount = Number(a.inp.value);
+      if (!amount) throw new Error("Enter an amount greater than zero");
+      const r = await api(`/me/groups/${g.group_id}/contributions`, { amount });
+      toast(r.message || "Contribution started");
+      setTimeout(route, 600);
+    });
+}
+
+function withdrawSheet(g) {
+  const a = amountField("wAmt", g.currency, `Available: ${money(g.available, g.currency)}`);
+  const reason = el("input", { class: "in", id: "wWhy", maxlength: "300", placeholder: "School fees, stock, medical bill" });
+  const to = el("input", { class: "in", id: "wTo", type: "tel", inputmode: "tel", value: state.me && state.me.phone ? "0" + state.me.phone.slice(-9) : "" });
+  setTimeout(() => a.inp.focus(), 50);
+  return sheetForm("Request money", "Other members vote on your request. Money is sent only after enough of them approve.", [
+    a.node,
+    el("div", { class: "fld" }, el("label", { class: "f", for: "wWhy" }, "What is it for?"), reason),
+    el("div", { class: "fld" }, el("label", { class: "f", for: "wTo" }, "Send to M-Pesa number"), to, el("p", { class: "help" }, "Your own number unless you change it")),
+  ], "Send request", async () => {
+    const amount = Number(a.inp.value);
+    if (!amount) throw new Error("Enter an amount greater than zero");
+    if (amount > g.available) throw new Error(`Only ${money(g.available, g.currency)} is available`);
+    const w = await api(`/me/groups/${g.group_id}/withdrawals`, { amount, recipient_phone: to.value.trim(), reason: reason.value.trim() });
+    toast(w.risk_level === "high"
+      ? `Request sent. Our fraud check flagged it, so it needs ${w.required_approvals} approvals.`
+      : `Request sent. It needs ${w.required_approvals} approvals from other members.`, w.risk_level === "high");
+    route();
+  });
+}
+
+function voteSheet(w, approve) {
+  return sheetForm(approve ? "Approve this withdrawal?" : "Reject this withdrawal?",
+    approve ? `${money(w.amount, w.currency)} will be sent to ${phoneFmt(w.recipient_phone)} once enough members approve.`
+            : "Your rejection is recorded. If enough members reject, the money stays in the group.",
+    [], approve ? "Approve" : "Reject", async () => {
+      const r = await api(`/me/withdrawals/${w.id}/${approve ? "approve" : "reject"}`, {});
+      toast(r.status === "executed" ? "Approved. Enough members agreed, so the money is being sent."
+        : r.status === "rejected" ? "Rejected. The withdrawal has been stopped."
+        : approve ? "Your approval was recorded." : "Your rejection was recorded.");
+      route();
+    }, approve ? "safe" : "danger");
+}
+
+function signOutSheet() {
+  return sheetForm("Sign out?", "You will need a new SMS code to sign in again.", [], "Sign out", async () => {
+    try { await api("/me/logout", {}); } catch {}
+    state.me = null; setVotes(0); location.hash = ""; showLogin();
+  }, "danger");
+}
+
+/* ---------- install to home screen ---------- */
+let installEvent = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvent = e; if (!location.hash && state.me) showHome().catch(() => {}); });
+function installCard() {
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if (standalone) return null;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (installEvent) {
+    return el("div", { class: "panel install", style: null }, el("b", {}, "Add ChamaChain to your home screen"),
+      el("p", {}, "Open it like any other app, with one tap."),
+      el("button", { class: "btn", type: "button", onclick: async () => { installEvent.prompt(); await installEvent.userChoice; installEvent = null; showHome().catch(() => {}); } }, "Install app"));
+  }
+  if (ios) {
+    return el("div", { class: "panel install" }, el("b", {}, "Add ChamaChain to your home screen"),
+      el("p", {}, "In Safari, tap the Share button, then Add to Home Screen."));
+  }
+  return null;
+}
+
+/* ---------- offline, refresh, start ---------- */
+function online() { $("#offline").classList.toggle("hidden", navigator.onLine); }
+addEventListener("online", () => { online(); route(); });
+addEventListener("offline", online);
+online();
+setInterval(() => {
+  if (document.visibilityState !== "visible" || $("#sheet").open || !state.me) return;
+  api("/me").then(me => { state.me = me; setVotes(me.pending_approvals); }).catch(() => {});
+}, 20000);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && state.me && !$("#sheet").open) route(); });
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/app/sw.js", { scope: "/app/" }).catch(() => {});
+route();
+})();
+</script>
+</body>
+</html>

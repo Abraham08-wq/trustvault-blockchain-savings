@@ -1,0 +1,1079 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChamaChain Shield</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@300;400;500;600;700&display=swap">
+<style nonce="{{NONCE}}">
+:root{
+  --abyss:#040A18; --deep:#081430; --deep-2:#0B1B3D; --rule:#13254A; --rule-hi:#1E3A6E;
+  --text:#D6E2FF; --muted:#6F85B3; --faint:#3A4F7A;
+  --signal:#4CC9FF; --safe:#3BE8A8; --alert:#FF4F6E; --caution:#FFB443;
+  --sans:"Sora",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r-sm:6px; --r-md:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--abyss);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(1200px 600px at 75% -10%, rgba(76,201,255,.07), transparent 60%),
+    linear-gradient(rgba(76,201,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(76,201,255,.025) 1px, transparent 1px);
+  background-size:auto, 32px 32px, 32px 32px;
+}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.01em}
+.muted{color:var(--muted)}
+.hidden{display:none !important}
+
+/* ---------- boot ---------- */
+#boot{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:var(--abyss)}
+#boot .frame{width:min(560px,92vw)}
+#boot h1{font-weight:300;font-size:28px;letter-spacing:.02em;margin:0 0 4px}
+#boot h1 b{font-weight:700}
+#boot p.lead{margin:0 0 28px;color:var(--muted)}
+.check{display:grid;grid-template-columns:22px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--rule);opacity:.35;transition:opacity .3s}
+.check.on{opacity:1}
+.check .dot{width:10px;height:10px;border-radius:50%;background:var(--faint);justify-self:center}
+.check.run .dot{background:var(--signal);animation:pulse 1s infinite}
+.check.ok .dot{background:var(--safe);box-shadow:0 0 12px var(--safe)}
+.check.bad .dot{background:var(--alert);box-shadow:0 0 12px var(--alert)}
+.check.warn .dot{background:var(--caution)}
+.check .what{font-weight:500}
+.check .detail{color:var(--muted);font-size:12px}
+.check .ms{color:var(--muted)}
+#signin{margin-top:28px;display:grid;gap:14px}
+#signin .f{display:flex;flex-direction:column;gap:6px}
+#signin label{color:var(--muted);font-size:12px}
+#signin .row{display:grid;grid-template-columns:1fr 160px;gap:10px}
+#signin input.code{font-family:var(--mono);letter-spacing:.3em;text-align:center}
+#signin .err{color:var(--alert);min-height:20px}
+#setupNote{margin-top:28px;border:1px solid var(--rule-hi);border-radius:var(--r-md);padding:16px;background:var(--deep)}
+#setupNote code{font-family:var(--mono);color:var(--signal);background:var(--abyss);padding:2px 6px;border-radius:4px}
+.who-am-i{color:var(--muted);font-size:12px;white-space:nowrap}
+.audit td{font-size:12px}
+.audit td.bad{color:var(--alert)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ---------- controls ---------- */
+input,select{background:var(--abyss);border:1px solid var(--rule-hi);border-radius:var(--r-sm);padding:9px 11px;min-width:0}
+input:focus,select:focus{border-color:var(--signal);outline:none}
+.btn{background:transparent;border:1px solid var(--rule-hi);border-radius:var(--r-sm);padding:8px 14px;cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s}
+.btn:hover{border-color:var(--signal)}
+.btn.primary{background:var(--signal);border-color:var(--signal);color:#021022;font-weight:600}
+.btn.primary:hover{background:#7ad8ff}
+.btn.safe{border-color:rgba(59,232,168,.5);color:var(--safe)}
+.btn.safe:hover{background:rgba(59,232,168,.1)}
+.btn.danger{border-color:rgba(255,79,110,.5);color:var(--alert)}
+.btn.danger:hover{background:rgba(255,79,110,.1)}
+a.btn{text-decoration:none;color:var(--text)}
+.btn.small{padding:5px 10px;font-size:12px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ---------- shell ---------- */
+#app{display:grid;grid-template-rows:auto 1fr;height:100%}
+header.top{display:flex;align-items:center;gap:24px;padding:12px 20px;border-bottom:1px solid var(--rule);background:rgba(4,10,24,.85);backdrop-filter:blur(8px);position:sticky;top:0;z-index:10}
+.brand{display:flex;align-items:center;gap:10px;font-weight:300;font-size:16px;white-space:nowrap}
+.brand b{font-weight:700}
+.brand svg{flex:none}
+.status{display:flex;gap:18px;margin-left:auto;flex-wrap:wrap}
+.pill{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);white-space:nowrap}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.pill.ok i{background:var(--safe);box-shadow:0 0 8px var(--safe)}
+.pill.bad i{background:var(--alert);box-shadow:0 0 8px var(--alert)}
+.pill.warn i{background:var(--caution)}
+.pill b{color:var(--text);font-weight:500}
+.body{display:grid;grid-template-columns:260px 1fr;min-height:0}
+nav.rail{border-right:1px solid var(--rule);padding:16px 12px;overflow:auto}
+nav.rail .head{display:flex;align-items:center;justify-content:space-between;padding:0 8px 10px}
+nav.rail h2{font-size:12px;font-weight:500;color:var(--muted);margin:0}
+.navitem{display:block;width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:var(--r-sm);padding:9px 10px;cursor:pointer;margin-bottom:2px}
+.navitem:hover{background:var(--deep)}
+.navitem[aria-current="true"]{background:var(--deep-2);border-color:var(--rule-hi)}
+.navitem .n{display:block;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.navitem .m{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.navitem .m .flag{color:var(--caution)}
+.navnet{margin-bottom:16px}
+main{overflow:auto;padding:24px 28px 48px}
+
+/* ---------- panels ---------- */
+.panel{background:linear-gradient(180deg,rgba(11,27,61,.75),rgba(8,20,48,.75));border:1px solid var(--rule);border-radius:var(--r-md);padding:18px;min-width:0}
+.panel h3{font-size:13px;font-weight:600;margin:0 0 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.panel h3 span.sub{font-weight:400;color:var(--muted);font-size:12px}
+.grid-2{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;margin-top:16px}
+.grid-2b{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:16px}
+.full{margin-top:16px}
+
+/* ---------- group header ---------- */
+.ghead{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end}
+.ghead h1{font-size:30px;font-weight:300;margin:0;letter-spacing:-.01em}
+.ghead .rule{color:var(--muted);margin-top:4px}
+.figures{display:flex;gap:40px;margin-top:20px;flex-wrap:wrap}
+.fig .v{font-size:34px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.fig .v small{font-size:14px;font-weight:400;color:var(--muted);margin-right:6px}
+.fig .k{color:var(--muted);font-size:12px;margin-top:2px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+
+/* integrity seal: the console's one bold element */
+.seal{position:relative;width:148px;height:148px;flex:none}
+.seal svg{width:100%;height:100%;overflow:visible}
+.seal .ring{fill:none;stroke-width:2;stroke:var(--rule-hi)}
+.seal .tick{stroke-width:2;stroke:var(--muted)}
+.seal .tick.minor{opacity:.35}
+.seal .sweep{fill:rgba(76,201,255,.18)}
+.seal .label{position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:24px}
+.seal .label b{font-size:15px;font-weight:600}
+.seal .label span{font-size:11px;color:var(--muted)}
+.seal.verifying .sweep{animation:spin 1.1s linear infinite;transform-origin:74px 74px}
+.seal.ok .ring{stroke:var(--safe)} .seal.ok .tick{stroke:var(--safe)} .seal.ok .label b{color:var(--safe)}
+.seal.bad .ring{stroke:var(--alert)} .seal.bad .tick{stroke:var(--alert)} .seal.bad .label b{color:var(--alert)}
+.seal.warn .ring{stroke:var(--caution)} .seal.warn .tick{stroke:var(--caution)} .seal.warn .label b{color:var(--caution)}
+.seal.bad{animation:alarm 1.6s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes alarm{0%,100%{filter:none}50%{filter:drop-shadow(0 0 14px rgba(255,79,110,.6))}}
+
+/* ---------- trust graph ---------- */
+#graph{width:100%;height:340px;display:block}
+#graph .edge{fill:none;stroke-width:1.6}
+#graph .edge.pending{stroke-dasharray:6 6;animation:flow 1.2s linear infinite}
+#graph .edge.high{stroke:var(--alert)}
+#graph .edge.medium{stroke:var(--caution)}
+#graph .edge.low{stroke:var(--signal)}
+#graph .edge.done{opacity:.35}
+#graph .edge.rejected{stroke:var(--alert);opacity:.25;stroke-dasharray:2 5}
+#graph .vote{stroke:var(--safe);stroke-width:1;opacity:.55}
+#graph .vote.no{stroke:var(--alert)}
+#graph .node circle.core{fill:var(--deep-2);stroke:var(--rule-hi);stroke-width:1.5}
+#graph .node.vault circle.core{stroke:var(--signal);stroke-width:2}
+#graph .node .share{fill:none;stroke:var(--signal);stroke-width:3;stroke-linecap:round}
+#graph .node text{fill:var(--text);font-size:11px;font-family:var(--sans)}
+#graph .node text.role{fill:var(--muted);font-size:10px}
+#graph .node.threat circle.core{stroke:var(--alert);stroke-width:2}
+#graph .halo{fill:none;stroke:var(--alert);opacity:0;animation:halo 2s ease-out infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+@keyframes halo{0%{opacity:.7;r:18}100%{opacity:0;r:40}}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:18px;height:2px;vertical-align:middle;margin-right:6px}
+
+/* ---------- threat feed ---------- */
+.feed{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow:auto;padding-right:4px}
+.wd{border:1px solid var(--rule);border-left:3px solid var(--signal);border-radius:var(--r-sm);padding:12px;background:rgba(4,10,24,.45)}
+.wd.high{border-left-color:var(--alert)}
+.wd.medium{border-left-color:var(--caution)}
+.wd.closed{opacity:.6}
+.wd .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.wd .amt{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.wd .state{font-size:12px;color:var(--muted)}
+.wd .state.executed{color:var(--safe)} .wd .state.rejected{color:var(--alert)}
+.wd .who{color:var(--muted);font-size:12px;margin-top:2px}
+.risk{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;margin-top:10px;font-size:12px}
+.risk .bar{height:4px;background:var(--rule);border-radius:2px;overflow:hidden}
+.risk .bar i{display:block;height:100%;width:0;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.wd.high .risk .bar i{background:var(--alert)} .wd.medium .risk .bar i{background:var(--caution)} .wd.low .risk .bar i{background:var(--signal)}
+.reasons{margin:8px 0 0;padding-left:16px;color:var(--muted);font-size:12px}
+.reasons li{margin:2px 0}
+.votes{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.votes .tally{font-size:12px}
+.votes .tally b{color:var(--safe)}
+.votes form{display:flex;gap:6px;flex-wrap:wrap}
+.votes select{padding:5px 8px;font-size:12px;max-width:150px}
+
+/* ---------- hash chain ---------- */
+.chain{display:flex;gap:0;overflow-x:auto;padding:6px 2px 12px;scroll-behavior:smooth}
+.block{flex:none;width:176px;border:1px solid var(--rule-hi);border-radius:var(--r-sm);padding:10px 12px;background:rgba(4,10,24,.6);position:relative}
+.block.anch{border-color:rgba(59,232,168,.45)}
+.block.broken{border-color:var(--alert);box-shadow:0 0 16px rgba(255,79,110,.35)}
+.block.fresh{animation:arrive .7s cubic-bezier(.2,.8,.2,1)}
+.block .seq{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.block .seq .a{color:var(--safe)}
+.block .amt{font-size:16px;font-weight:600;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.block .amt.out{color:var(--caution)}
+.block .who{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.block .hash{margin-top:8px;color:var(--signal);font-size:11px}
+.block .prev{color:var(--faint);font-size:11px}
+.link{flex:none;width:26px;align-self:center;height:2px;background:linear-gradient(90deg,var(--rule-hi),var(--signal));position:relative}
+.link::after{content:"";position:absolute;right:-2px;top:-3px;border:4px solid transparent;border-left-color:var(--signal)}
+@keyframes arrive{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+
+/* ---------- tables & lists ---------- */
+table{width:100%;border-collapse:collapse}
+th{font-weight:500;color:var(--muted);font-size:12px;text-align:left;padding:0 8px 8px}
+td{padding:9px 8px;border-top:1px solid var(--rule);vertical-align:middle}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.role{font-size:12px;color:var(--muted)}
+.log{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto}
+.log li{display:grid;grid-template-columns:62px 1fr;gap:12px;padding:8px 0;border-top:1px solid var(--rule);font-size:13px}
+.log li:first-child{border-top:none}
+.log .t{color:var(--muted);font-size:12px}
+.log .e.in{color:var(--safe)} .log .e.out{color:var(--caution)} .log .e.alert{color:var(--alert)} .log .e.chain{color:var(--signal)}
+.anchors td{font-size:12px}
+.empty{color:var(--muted);padding:20px 0;text-align:center}
+
+/* ---------- overview ---------- */
+.ovhead h1{font-size:30px;font-weight:300;margin:0}
+.ovhead p{color:var(--muted);margin:4px 0 0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:20px}
+.tile{border:1px solid var(--rule);border-radius:var(--r-md);padding:14px 16px;background:rgba(8,20,48,.6)}
+.tile .v{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.tile .k{color:var(--muted);font-size:12px}
+.tile.alert .v{color:var(--alert)} .tile.safe .v{color:var(--safe)}
+#netmap{width:100%;height:380px;display:block}
+#netmap .spoke{stroke:var(--rule-hi);stroke-width:1}
+#netmap .spoke.live{stroke:var(--signal);stroke-dasharray:3 7;animation:flow 2.4s linear infinite;opacity:.7}
+#netmap g.gnode{cursor:pointer}
+#netmap g.gnode circle{fill:var(--deep-2);stroke:var(--signal);stroke-width:1.5}
+#netmap g.gnode.flag circle{stroke:var(--caution)}
+#netmap g.gnode:hover circle,#netmap g.gnode:focus circle{fill:#123067}
+#netmap text{fill:var(--text);font-size:11px;font-family:var(--sans)}
+#netmap text.k{fill:var(--muted);font-size:10px}
+#netmap .hub{fill:var(--abyss);stroke:var(--safe);stroke-width:2}
+
+/* ---------- dialogs & toasts ---------- */
+dialog{background:var(--deep);color:var(--text);border:1px solid var(--rule-hi);border-radius:var(--r-md);padding:0;width:min(440px,94vw)}
+dialog::backdrop{background:rgba(2,6,16,.7);backdrop-filter:blur(3px)}
+dialog form{padding:22px}
+dialog h2{margin:0 0 4px;font-size:18px;font-weight:600}
+dialog p.help{margin:0 0 16px;color:var(--muted);font-size:13px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:12px;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--rule-hi);border-radius:var(--r-sm);overflow:hidden}
+.seg label{flex:1;text-align:center;padding:8px;cursor:pointer;font-size:13px;color:var(--muted)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg input:checked + span{color:var(--text)}
+.seg label:has(input:checked){background:var(--deep-2);color:var(--text)}
+.seg label:has(input:focus-visible){outline:2px solid var(--signal);outline-offset:-2px}
+dialog .err{color:var(--alert);font-size:13px;min-height:18px;margin:0 0 10px}
+dialog .row{display:flex;justify-content:flex-end;gap:8px}
+#toasts{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:8px;z-index:60}
+.toast{background:var(--deep-2);border:1px solid var(--rule-hi);border-left:3px solid var(--safe);border-radius:var(--r-sm);padding:10px 14px;max-width:360px;animation:arrive .4s ease}
+.toast.bad{border-left-color:var(--alert)}
+
+@media (max-width:1100px){.grid-2,.grid-2b{grid-template-columns:1fr}}
+@media (max-width:760px){
+  .body{grid-template-columns:1fr}
+  nav.rail{border-right:none;border-bottom:1px solid var(--rule);max-height:220px}
+  main{padding:16px}
+  .ghead{grid-template-columns:1fr}
+  .seal{width:120px;height:120px}
+  header.top{flex-wrap:wrap;gap:10px}
+  .status{margin-left:0;gap:12px}
+  .fig .v{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+
+<div id="boot" role="dialog" aria-modal="true" aria-labelledby="bootTitle">
+  <div class="frame">
+    <h1 id="bootTitle"><b>ChamaChain</b> Shield</h1>
+    <p class="lead">Operations console for tamper-proof savings groups</p>
+    <div id="checks">
+      <div class="check" data-k="api"><span class="dot"></span><div><div class="what">Console API</div><div class="detail">Waiting</div></div><span class="ms mono"></span></div>
+      <div class="check" data-k="database"><span class="dot"></span><div><div class="what">Ledger store</div><div class="detail">Waiting</div></div><span class="ms mono"></span></div>
+      <div class="check" data-k="blockchain"><span class="dot"></span><div><div class="what">Blockchain anchor</div><div class="detail">Waiting</div></div><span class="ms mono"></span></div>
+      <div class="check" data-k="ai"><span class="dot"></span><div><div class="what">AI fraud engine</div><div class="detail">Waiting</div></div><span class="ms mono"></span></div>
+      <div class="check" data-k="payments"><span class="dot"></span><div><div class="what">M-Pesa payments</div><div class="detail">Waiting</div></div><span class="ms mono"></span></div>
+    </div>
+    <form id="signin" class="hidden" autocomplete="on">
+      <div class="f"><label for="inUser">Username</label><input id="inUser" name="username" autocomplete="username" required></div>
+      <div class="row">
+        <div class="f"><label for="inPass">Password</label><input id="inPass" name="password" type="password" autocomplete="current-password" required></div>
+        <div class="f"><label for="inCode">Authenticator code</label><input id="inCode" class="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></div>
+      </div>
+      <button class="btn primary" type="submit">Sign in</button>
+      <div class="err" id="signinErr" role="alert"></div>
+    </form>
+    <div id="setupNote" class="hidden">
+      <b>Create your admin account</b>
+      <p class="muted">No admin exists yet. In your terminal, inside the chamachain folder, run <code>make admin</code>, then come back and sign in.</p>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <header class="top">
+    <div class="brand">
+      <svg width="22" height="24" viewBox="0 0 22 24" aria-hidden="true"><path d="M11 1 2 4.5v6.7c0 5.6 3.8 10.3 9 11.8 5.2-1.5 9-6.2 9-11.8V4.5L11 1Z" fill="none" stroke="#4CC9FF" stroke-width="1.6"/><path d="m6.5 12 3 3 6-6" fill="none" stroke="#3BE8A8" stroke-width="1.8"/></svg>
+      <span><b>ChamaChain</b> Shield</span>
+    </div>
+    <div class="status" id="status" aria-live="polite"></div>
+    <a class="btn small" href="/app/" target="_blank" rel="noopener">Member app</a>
+    <span class="who-am-i" id="whoami"></span>
+    <button class="btn small" id="lockBtn" type="button">Sign out</button>
+  </header>
+  <div class="body">
+    <nav class="rail" aria-label="Groups">
+      <div class="navnet"><button class="navitem" id="navNetwork" type="button"><span class="n">Network overview</span><span class="m"><span>All groups</span></span></button></div>
+      <div class="head"><h2>Savings groups</h2><button class="btn small" id="newGroupBtn" type="button">New group</button></div>
+      <div id="groupList"></div>
+    </nav>
+    <main id="main"></main>
+  </div>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+
+<!-- dialogs -->
+<dialog id="dlgGroup"><form method="dialog" data-kind="group">
+  <h2>Create a savings group</h2>
+  <p class="help">Every withdrawal will need this many approvals from members other than the person asking.</p>
+  <div class="field"><label for="gName">Group name</label><input id="gName" name="name" required minlength="2" maxlength="120"></div>
+  <div class="field"><label for="gCur">Currency</label><select id="gCur" name="currency"><option>KES</option><option>UGX</option><option>TZS</option><option>RWF</option><option>NGN</option><option>GHS</option><option>ZAR</option><option>XOF</option></select></div>
+  <div class="field"><label for="gTh">Approvals required</label><input id="gTh" name="approval_threshold" type="number" min="1" max="20" value="2" required></div>
+  <p class="err"></p>
+  <div class="row"><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn primary" value="ok">Create group</button></div>
+</form></dialog>
+
+<dialog id="dlgMember"><form method="dialog" data-kind="member">
+  <h2>Add a member</h2>
+  <p class="help">The phone number is used for M-Pesa and for the USSD menu on basic phones.</p>
+  <div class="field"><label for="mName">Full name</label><input id="mName" name="name" required minlength="2" maxlength="120"></div>
+  <div class="field"><label for="mPhone">Phone number</label><input id="mPhone" name="phone" required inputmode="tel" placeholder="0712 345 678"></div>
+  <div class="field"><label for="mRole">Role</label><select id="mRole" name="role"><option value="member">Member</option><option value="chair">Chair</option><option value="treasurer">Treasurer</option><option value="secretary">Secretary</option></select></div>
+  <p class="err"></p>
+  <div class="row"><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn primary" value="ok">Add member</button></div>
+</form></dialog>
+
+<dialog id="dlgContrib"><form method="dialog" data-kind="contrib">
+  <h2>Record a contribution</h2>
+  <p class="help">M-Pesa sends a payment prompt to the member's phone. Cash entries need the receipt or reference number.</p>
+  <div class="field"><label for="cMember">Member</label><select id="cMember" name="member_id" required></select></div>
+  <div class="field"><label for="cAmt">Amount</label><input id="cAmt" name="amount" type="number" min="1" step="1" required></div>
+  <div class="field"><span class="muted" id="cMethodLabel">Method</span>
+    <div class="seg" role="radiogroup" aria-labelledby="cMethodLabel">
+      <label><input type="radio" name="method" value="mpesa" checked><span>M-Pesa prompt</span></label>
+      <label><input type="radio" name="method" value="cash"><span>Cash or bank</span></label>
+    </div>
+  </div>
+  <div class="field hidden" id="cRefField"><label for="cRef">Receipt or reference number</label><input id="cRef" name="reference" maxlength="64"></div>
+  <p class="err"></p>
+  <div class="row"><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn primary" value="ok">Record contribution</button></div>
+</form></dialog>
+
+<dialog id="dlgWithdraw"><form method="dialog" data-kind="withdraw">
+  <h2>Request a withdrawal</h2>
+  <p class="help">The AI engine scores the request before anyone votes. High-risk requests need one extra approval.</p>
+  <div class="field"><label for="wBy">Requested by</label><select id="wBy" name="requested_by" required></select></div>
+  <div class="field"><label for="wAmt">Amount</label><input id="wAmt" name="amount" type="number" min="1" step="1" required></div>
+  <div class="field"><label for="wTo">Pay to phone number</label><input id="wTo" name="recipient_phone" required inputmode="tel"></div>
+  <div class="field"><label for="wWhy">Reason</label><input id="wWhy" name="reason" maxlength="300" placeholder="School fees, stock, emergency"></div>
+  <p class="err"></p>
+  <div class="row"><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn primary" value="ok">Request withdrawal</button></div>
+</form></dialog>
+
+<script nonce="{{NONCE}}">
+"use strict";
+(() => {
+const $ = (s, r = document) => r.querySelector(s);
+const SVGNS = "http://www.w3.org/2000/svg";
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* Safe DOM builder: text is always set through textContent. */
+function el(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") n.className = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const k of kids.flat()) if (k != null) n.append(k instanceof Node ? k : document.createTextNode(String(k)));
+  return n;
+}
+function sv(tag, attrs, ...kids) {
+  const n = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) if (v != null) n.setAttribute(k, v);
+  for (const k of kids.flat()) if (k != null) n.append(k instanceof Node ? k : document.createTextNode(String(k)));
+  return n;
+}
+
+const state = {
+  admin: null, view: "network", groupId: null,
+  groups: [], system: null, stats: null,
+  group: null, withdrawals: [], ledger: [], verify: null, anchors: [],
+  seenSeq: new Map(), verifying: false,
+};
+
+class AuthError extends Error {}
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    method: opts.method || "GET",
+    credentials: "same-origin",
+    headers: Object.assign({ "X-Requested-With": "chamachain" }, opts.body ? { "Content-Type": "application/json" } : {}),
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  let data = null;
+  try { data = await res.json(); } catch {}
+  if (res.status === 401) throw new AuthError(cleanErr(data && data.error) || "Sign in required");
+  if (!res.ok) throw new Error(cleanErr(data && data.error) || `Request failed (${res.status})`);
+  return data;
+}
+function cleanErr(s) {
+  if (!s) return "";
+  s = s.replace(/^(validation failed|conflict|forbidden|not found|unauthorized): ?/i, "");
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/* ---------- formatting ---------- */
+const nf = new Intl.NumberFormat("en-KE");
+const money = (n, cur) => `${cur ? cur + " " : ""}${nf.format(Math.round(n))}`;
+const short = (h, n = 10) => h ? h.replace(/^0x/, "").slice(0, n) : "";
+function ago(t) {
+  const s = Math.max(0, (Date.now() - new Date(t).getTime()) / 1000);
+  if (s < 60) return `${Math.floor(s)}s ago`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return new Date(t).toLocaleDateString("en-KE", { day: "numeric", month: "short" });
+}
+const clock = t => new Date(t).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" });
+const roleName = r => ({ chair: "Chair", treasurer: "Treasurer", secretary: "Secretary", member: "Member" }[r] || r);
+
+/* Count a number up to its new value when it changes (real values only). */
+const lastVals = new WeakMap();
+function countTo(node, value, fmt) {
+  const from = lastVals.has(node) ? lastVals.get(node) : value;
+  lastVals.set(node, value);
+  if (reduceMotion || from === value) { node.textContent = fmt(value); return; }
+  const t0 = performance.now(), d = 700;
+  const step = t => {
+    const p = Math.min(1, (t - t0) / d), e = 1 - Math.pow(1 - p, 3);
+    node.textContent = fmt(from + (value - from) * e);
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function toast(msg, bad) {
+  const t = el("div", { class: "toast" + (bad ? " bad" : ""), role: "status" }, msg);
+  $("#toasts").append(t);
+  setTimeout(() => t.remove(), 4200);
+}
+
+/* ---------- boot sequence: each line is a real check ---------- */
+function setCheck(k, cls, detail, ms) {
+  const row = $(`.check[data-k="${k}"]`);
+  row.className = `check on ${cls}`;
+  $(".detail", row).textContent = detail;
+  $(".ms", row).textContent = ms != null ? `${ms} ms` : "";
+}
+const pause = ms => new Promise(r => setTimeout(r, reduceMotion ? 0 : ms));
+
+async function boot() {
+  setCheck("api", "run", "Connecting");
+  const t0 = performance.now();
+  try {
+    const r = await fetch("/health");
+    if (!r.ok) throw new Error();
+    setCheck("api", "ok", "Online", Math.round(performance.now() - t0));
+  } catch {
+    setCheck("api", "bad", "The API is not responding. Start it with: make up");
+    return;
+  }
+  await pause(180);
+  let sys;
+  try { sys = await api("/system"); state.admin = await api("/admin/me"); }
+  catch (e) {
+    if (e instanceof AuthError) return showSignin();
+    setCheck("database", "bad", e.message); return;
+  }
+  for (const k of ["database", "blockchain", "ai", "payments"]) {
+    setCheck(k, "run", "Checking");
+    await pause(160);
+    const c = sys[k];
+    const cls = !c.ok ? (k === "ai" ? "warn" : "bad") : (k === "payments" && sys.payments_mode === "test" ? "warn" : "ok");
+    setCheck(k, cls, c.detail, k === "payments" ? null : c.latency_ms);
+  }
+  state.system = sys;
+  await pause(450);
+  enterConsole();
+}
+
+async function showSignin(msg) {
+  let exists = true;
+  try { exists = (await (await fetch("/admin/status")).json()).admin_exists; } catch {}
+  if (!exists) { $("#setupNote").classList.remove("hidden"); return; }
+  $("#signin").classList.remove("hidden");
+  $("#signinErr").textContent = msg || "";
+  ($("#inUser").value ? $("#inPass") : $("#inUser")).focus();
+}
+$("#signin").addEventListener("submit", async e => {
+  e.preventDefault();
+  const btn = $("#signin button"); btn.disabled = true;
+  $("#signinErr").textContent = "";
+  try {
+    await api("/admin/login", { method: "POST", body: { username: $("#inUser").value, password: $("#inPass").value, code: $("#inCode").value } });
+    $("#inPass").value = ""; $("#inCode").value = "";
+    $("#signin").classList.add("hidden");
+    boot();
+  } catch (ex) {
+    $("#signinErr").textContent = ex.message;
+    $("#inCode").value = ""; $("#inCode").focus();
+  } finally { btn.disabled = false; }
+});
+$("#lockBtn").addEventListener("click", async () => {
+  try { await api("/admin/logout", { method: "POST" }); } catch {}
+  location.reload();
+});
+
+function enterConsole() {
+  $("#boot").classList.add("hidden");
+  $("#app").classList.remove("hidden");
+  $("#whoami").textContent = state.admin && state.admin.type === "admin" ? `Signed in as ${state.admin.name}` : "";
+  renderStatus();
+  refreshAll();
+  setInterval(refreshLive, 4000);
+  setInterval(refreshSystem, 12000);
+  setInterval(() => { if (state.view === "group") runVerify(); }, 20000);
+}
+
+/* ---------- data refresh ---------- */
+async function guard(fn) {
+  try { await fn(); }
+  catch (e) {
+    if (e instanceof AuthError) { location.reload(); return; }
+    console.warn(e);
+  }
+}
+async function refreshSystem() { await guard(async () => { state.system = await api("/system"); renderStatus(); }); }
+async function refreshGroups() { await guard(async () => { state.groups = await api("/groups"); renderGroupList(); }); }
+async function refreshAll() {
+  await refreshGroups();
+  if (state.view === "network") await loadNetwork(); else await loadGroup(true);
+}
+async function refreshLive() {
+  await refreshGroups();
+  if (state.view === "network") await loadNetwork(); else await loadGroup(false);
+}
+
+/* ---------- status bar ---------- */
+function renderStatus() {
+  const s = state.system; if (!s) return;
+  const pill = (cls, label, value) => el("div", { class: "pill " + cls, title: label }, el("i"), label, value ? el("b", { class: "mono" }, value) : null);
+  $("#status").replaceChildren(
+    pill(s.database.ok ? "ok" : "bad", "Ledger", null),
+    pill(s.blockchain.ok ? "ok" : "bad", "Chain", s.blockchain.ok ? `#${nf.format(s.block_number)}` : "offline"),
+    pill(s.ai.ok ? "ok" : "warn", "AI engine", null),
+    pill(s.payments_mode === "live" ? "ok" : "warn", "M-Pesa", s.payments_mode === "live" ? "live" : "test mode"),
+  );
+}
+
+/* ---------- group list ---------- */
+function renderGroupList() {
+  const list = $("#groupList");
+  if (!state.groups.length) {
+    list.replaceChildren(el("p", { class: "empty" }, "No groups yet. Create the first one."));
+  } else {
+    list.replaceChildren(...state.groups.map(g => el("button", {
+      class: "navitem", type: "button", "aria-current": state.view === "group" && state.groupId === g.id ? "true" : "false",
+      onclick: () => openGroup(g.id),
+    },
+      el("span", { class: "n" }, g.name),
+      el("span", { class: "m" }, el("span", {}, money(g.balance, g.currency)),
+        g.pending_withdrawals ? el("span", { class: "flag" }, `${g.pending_withdrawals} pending`) : el("span", {}, `${g.members} members`)),
+    )));
+  }
+  $("#navNetwork").setAttribute("aria-current", state.view === "network" ? "true" : "false");
+}
+$("#navNetwork").addEventListener("click", () => { state.view = "network"; state.groupId = null; renderGroupList(); refreshAll(); });
+function openGroup(id) {
+  state.view = "group"; state.groupId = id;
+  state.group = null; state.verify = null; state.seenSeq.delete(id);
+  renderGroupList();
+  $("#main").replaceChildren(el("p", { class: "empty" }, "Loading group"));
+  loadGroup(true);
+}
+
+/* ---------- network overview ---------- */
+async function loadNetwork() {
+  await guard(async () => {
+    const [st, au] = await Promise.all([api("/stats"), api("/audit")]);
+    state.stats = st; state.audit = au;
+    renderNetwork();
+  });
+}
+function renderNetwork() {
+  const s = state.stats; if (!s) return;
+  let root = $("#ov");
+  if (!root) {
+    root = el("section", { id: "ov" },
+      el("div", { class: "ovhead" }, el("h1", {}, "Network overview"),
+        el("p", {}, "Every group's money, protected by member approvals, AI screening and a blockchain-anchored ledger.")),
+      el("div", { class: "tiles" },
+        tile("tProtected", "Money protected", "safe"), tile("tGroups", "Savings groups"), tile("tMembers", "Members"),
+        tile("tFlagged", "High-risk requests flagged"), tile("tBlocked", "Withdrawals stopped"), tile("tAnchors", "Blockchain anchors")),
+      el("div", { class: "panel full" },
+        el("h3", {}, "Group network", el("span", { class: "sub" }, "Each group anchors its ledger to the ChamaLedger contract")),
+        sv("svg", { id: "netmap", role: "img", "aria-label": "Map of savings groups connected to the blockchain contract" })),
+      el("div", { class: "panel full audit" },
+        el("h3", {}, "Audit trail", el("span", { class: "sub" }, "Every sign-in and change, who made it and from where")),
+        el("div", { id: "audit" })),
+    );
+    $("#main").replaceChildren(root);
+  }
+  countTo($("#tProtected .v"), s.protected_balance, v => nf.format(Math.round(v)));
+  countTo($("#tGroups .v"), s.groups, v => nf.format(Math.round(v)));
+  countTo($("#tMembers .v"), s.members, v => nf.format(Math.round(v)));
+  countTo($("#tFlagged .v"), s.flagged_high_risk, v => nf.format(Math.round(v)));
+  $("#tFlagged").classList.toggle("alert", s.flagged_high_risk > 0);
+  countTo($("#tBlocked .v"), s.blocked_withdrawals, v => nf.format(Math.round(v)));
+  countTo($("#tAnchors .v"), s.anchors, v => nf.format(Math.round(v)));
+  drawNetmap();
+  renderAudit();
+}
+const actionNames = {
+  "admin.login": "Signed in to the console", "admin.login_failed": "Failed console sign-in", "admin.created": "Admin account created",
+  "member.login": "Signed in to the member app",
+};
+function describeAction(a) {
+  if (actionNames[a.action]) return actionNames[a.action];
+  const m = a.action.match(/^POST (\S+)$/); const p = m ? m[1] : a.action;
+  if (/\/approve$/.test(p)) return "Approved a withdrawal";
+  if (/\/reject$/.test(p)) return "Rejected a withdrawal";
+  if (/\/cancel$/.test(p)) return "Cancelled a withdrawal";
+  if (/\/contributions(\/mpesa)?$/.test(p)) return "Recorded a contribution";
+  if (/\/withdrawals$/.test(p)) return "Requested a withdrawal";
+  if (/\/members$/.test(p)) return "Added a member";
+  if (p === "/groups") return "Created a group";
+  if (/\/logout$/.test(p)) return "Signed out";
+  return a.action;
+}
+function renderAudit() {
+  const box = $("#audit"); if (!box) return;
+  const list = (state.audit || []).slice(0, 15);
+  if (!list.length) { box.replaceChildren(el("p", { class: "empty" }, "Sign-ins and changes are recorded here.")); return; }
+  const who = a => a.actor_type === "member" ? `Member ${a.actor}` : a.actor_type === "service" ? "System key" : a.actor;
+  box.replaceChildren(el("table", {},
+    el("thead", {}, el("tr", {}, el("th", {}, "When"), el("th", {}, "Who"), el("th", {}, "What"), el("th", {}, "From"))),
+    el("tbody", {}, list.map(a => el("tr", {},
+      el("td", { class: "muted" }, ago(a.created_at)),
+      el("td", {}, who(a)),
+      el("td", { class: a.action === "admin.login_failed" ? "bad" : "" }, describeAction(a)),
+      el("td", { class: "mono muted" }, a.ip || ""))))));
+}
+function tile(id, label, cls) {
+  return el("div", { class: "tile " + (cls || ""), id }, el("div", { class: "v" }, "0"), el("div", { class: "k" }, label));
+}
+/* Places a two-line label outside a node on a ring, so it never overlaps the node or its spoke. */
+function outwardLabel(a, x, y, gap) {
+  const c = Math.cos(a), s = Math.sin(a);
+  if (s < -0.6) return { x, y1: y - gap - 14, y2: y - gap, anchor: "middle" };          // top
+  if (s > 0.6) return { x, y1: y + gap + 10, y2: y + gap + 23, anchor: "middle" };       // bottom
+  return { x: x + c * gap, y1: y - 2, y2: y + 11, anchor: c > 0 ? "start" : "end" };    // sides
+}
+const clip = (t, n) => t.length > n ? t.slice(0, n - 1) + "…" : t;
+
+function drawNetmap() {
+  const svg = $("#netmap"); if (!svg) return;
+  const W = svg.clientWidth || 800, H = 380, cx = W / 2, cy = H / 2;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const gs = state.groups.slice(0, 24);
+  const R = Math.min(W / 2 - 150, H / 2 - 70);
+  const maxBal = Math.max(1, ...gs.map(g => g.balance));
+  const HUB = 46;
+  const kids = [];
+  const place = (g, i) => {
+    const a = (i / Math.max(1, gs.length)) * Math.PI * 2 - Math.PI / 2 + (gs.length === 2 ? Math.PI / 2 : 0);
+    const r = 10 + 14 * Math.sqrt(Math.max(0, g.balance) / maxBal);
+    return { a, r, x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R };
+  };
+  gs.forEach((g, i) => {
+    const p = place(g, i), c = Math.cos(p.a), s = Math.sin(p.a);
+    kids.push(sv("line", { class: "spoke" + (g.balance > 0 ? " live" : ""),
+      x1: cx + c * HUB, y1: cy + s * HUB, x2: p.x - c * (p.r + 4), y2: p.y - s * (p.r + 4) }));
+  });
+  kids.push(sv("circle", { class: "hub", cx, cy, r: HUB }));
+  kids.push(sv("text", { x: cx, y: cy - 2, "text-anchor": "middle" }, "ChamaLedger"));
+  kids.push(sv("text", { class: "k", x: cx, y: cy + 13, "text-anchor": "middle" }, state.system && state.system.blockchain.ok ? `block ${nf.format(state.system.block_number)}` : "chain offline"));
+  gs.forEach((g, i) => {
+    const { a, r, x, y } = place(g, i);
+    const L = outwardLabel(a, x, y, r + 10);
+    const node = sv("g", { class: "gnode" + (g.pending_withdrawals ? " flag" : ""), tabindex: "0", role: "button", "aria-label": `Open ${g.name}` },
+      sv("circle", { cx: x, cy: y, r }),
+      sv("text", { x: L.x, y: L.y1, "text-anchor": L.anchor }, clip(g.name, 26)),
+      sv("text", { class: "k", x: L.x, y: L.y2, "text-anchor": L.anchor }, money(g.balance, g.currency)));
+    node.addEventListener("click", () => openGroup(g.id));
+    node.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openGroup(g.id); } });
+    kids.push(node);
+  });
+  if (!gs.length) kids.push(sv("text", { class: "k", x: cx, y: cy + 60, "text-anchor": "middle" }, "Groups appear here as they are created"));
+  svg.replaceChildren(...kids);
+}
+
+/* ---------- group view ---------- */
+async function loadGroup(first) {
+  const id = state.groupId; if (!id) return;
+  await guard(async () => {
+    const [g, w, l, a] = await Promise.all([
+      api(`/groups/${id}`), api(`/groups/${id}/withdrawals`), api(`/groups/${id}/ledger`), api(`/groups/${id}/anchors`),
+    ]);
+    if (state.groupId !== id) return;
+    state.group = g; state.withdrawals = w; state.ledger = l; state.anchors = a;
+    renderGroup();
+    if (first) runVerify();
+  });
+}
+async function runVerify() {
+  const id = state.groupId; if (!id || state.verifying) return;
+  state.verifying = true; renderSeal();
+  await guard(async () => {
+    const [v] = await Promise.all([api(`/groups/${id}/ledger/verify`), pause(900)]);
+    if (state.groupId === id) state.verify = v;
+  });
+  state.verifying = false; renderSeal();
+}
+
+function memberIndex() {
+  const m = new Map();
+  for (const x of (state.group ? state.group.members : [])) m.set(x.id, x);
+  return m;
+}
+function contributedBy() {
+  const c = new Map();
+  for (const e of state.ledger) if (e.type === "contribution" && e.member_id) c.set(e.member_id, (c.get(e.member_id) || 0) + e.amount);
+  return c;
+}
+
+function renderGroup() {
+  const g = state.group; if (!g) return;
+  let root = $("#gv");
+  if (!root || root.dataset.id !== g.id) {
+    root = el("section", { id: "gv", "data-id": g.id },
+      el("div", { class: "ghead" },
+        el("div", {},
+          el("h1", { id: "gName2" }),
+          el("div", { class: "rule", id: "gRule" }),
+          el("div", { class: "figures" },
+            el("div", { class: "fig" }, el("div", { class: "v" }, el("small", { id: "gCur1" }), el("span", { id: "gBal" }, "0")), el("div", { class: "k" }, "Group balance")),
+            el("div", { class: "fig" }, el("div", { class: "v" }, el("small", { id: "gCur2" }), el("span", { id: "gAvail" }, "0")), el("div", { class: "k" }, "Available after pending requests")),
+            el("div", { class: "fig" }, el("div", { class: "v", id: "gMembers" }, "0"), el("div", { class: "k" }, "Active members"))),
+          el("div", { class: "actions" },
+            el("button", { class: "btn", type: "button", onclick: () => openDialog("dlgMember") }, "Add member"),
+            el("button", { class: "btn", type: "button", onclick: () => openDialog("dlgContrib") }, "Record contribution"),
+            el("button", { class: "btn primary", type: "button", onclick: () => openDialog("dlgWithdraw") }, "Request withdrawal"))),
+        el("div", { class: "seal", id: "seal", role: "status", "aria-live": "polite" })),
+      el("div", { class: "grid-2" },
+        el("div", { class: "panel" },
+          el("h3", {}, "Trust graph", el("span", { class: "sub" }, "Who is moving money, and who approved it")),
+          sv("svg", { id: "graph", role: "img", "aria-label": "Members, withdrawal requests and approvals" }),
+          el("div", { class: "legend" },
+            legend("var(--signal)", "Request, low risk"), legend("var(--caution)", "Medium risk"), legend("var(--alert)", "High risk"), legend("var(--safe)", "Approval vote"))),
+        el("div", { class: "panel" },
+          el("h3", {}, "Threat feed", el("span", { class: "sub", id: "feedSub" })),
+          el("div", { class: "feed", id: "feed" }))),
+      el("div", { class: "panel full" },
+        el("h3", {}, "Hash chain", el("span", { class: "sub", id: "chainSub" })),
+        el("div", { class: "chain", id: "chain" })),
+      el("div", { class: "grid-2b" },
+        el("div", { class: "panel" }, el("h3", {}, "Members"), el("div", { id: "members" })),
+        el("div", { class: "panel" }, el("h3", {}, "Activity"), el("ul", { class: "log", id: "log" }))),
+      el("div", { class: "panel full anchors" },
+        el("h3", {}, "Blockchain anchors", el("span", { class: "sub", id: "anchSub" })),
+        el("div", { id: "anchors" })),
+    );
+    $("#main").replaceChildren(root);
+  }
+  $("#gName2").textContent = g.name;
+  $("#gRule").textContent = `Each withdrawal needs ${g.approval_threshold} approval${g.approval_threshold > 1 ? "s" : ""} from members other than the requester. High-risk requests need one more.`;
+  $("#gCur1").textContent = g.currency; $("#gCur2").textContent = g.currency;
+  countTo($("#gBal"), g.balance, v => nf.format(Math.round(v)));
+  countTo($("#gAvail"), g.available, v => nf.format(Math.round(v)));
+  countTo($("#gMembers"), g.members.filter(m => m.active).length, v => String(Math.round(v)));
+  renderSeal(); renderFeed(); renderChain(); renderMembers(); renderLog(); renderAnchors(); drawGraph();
+  fillSelects();
+}
+function legend(color, label) {
+  const i = el("i"); i.style.background = color;
+  return el("span", {}, i, label);
+}
+
+/* integrity seal */
+function renderSeal() {
+  const box = $("#seal"); if (!box) return;
+  const v = state.verify;
+  let cls = "warn", title = "Not checked", sub = "Verification pending";
+  if (state.verifying) { cls = "verifying"; title = "Verifying"; sub = "Recomputing every hash"; }
+  else if (v) {
+    if (!v.valid) { cls = "bad"; title = "Tampered"; sub = v.broken_at_seq ? `Record ${v.broken_at_seq} was altered` : (v.reason || "Ledger does not match"); }
+    else if (v.anchor_source === "blockchain" && v.anchor_matches) { cls = "ok"; title = "Verified"; sub = `${v.entries} records match the blockchain`; }
+    else if (v.entries === 0) { cls = "ok"; title = "Clean"; sub = "No records yet"; }
+    else { cls = "warn"; title = "Unanchored"; sub = v.warning || "Waiting for the blockchain"; }
+  }
+  box.className = "seal " + cls;
+  const ticks = [];
+  for (let i = 0; i < 48; i++) {
+    const a = (i / 48) * Math.PI * 2, r1 = i % 4 === 0 ? 62 : 65, r2 = 69;
+    ticks.push(sv("line", { class: "tick" + (i % 4 ? " minor" : ""), x1: 74 + Math.cos(a) * r1, y1: 74 + Math.sin(a) * r1, x2: 74 + Math.cos(a) * r2, y2: 74 + Math.sin(a) * r2 }));
+  }
+  const svg = sv("svg", { viewBox: "0 0 148 148", "aria-hidden": "true" },
+    sv("circle", { class: "ring", cx: 74, cy: 74, r: 56 }),
+    sv("g", {}, ticks),
+    state.verifying ? sv("path", { class: "sweep", d: "M74 74 L74 5 A69 69 0 0 1 133.7 39.5 Z" }) : null);
+  box.replaceChildren(svg, el("div", { class: "label" }, el("b", {}, title), el("span", {}, sub)));
+  box.title = "Ledger integrity. Click to verify again.";
+  box.onclick = () => runVerify();
+}
+
+/* threat feed */
+function renderFeed() {
+  const feed = $("#feed"); const mi = memberIndex(); const cur = state.group.currency;
+  const list = [...state.withdrawals].sort((a, b) => (a.status === "pending") === (b.status === "pending")
+    ? new Date(b.created_at) - new Date(a.created_at) : (a.status === "pending" ? -1 : 1));
+  const pending = list.filter(w => w.status === "pending");
+  $("#feedSub").textContent = pending.length ? `${pending.length} awaiting votes` : "No open requests";
+  if (!list.length) { feed.replaceChildren(el("p", { class: "empty" }, "Withdrawal requests appear here with their AI risk assessment.")); return; }
+  const prevBars = new Map([...feed.querySelectorAll(".wd")].map(n => [n.dataset.id, n.querySelector(".bar i")?.style.width]));
+  feed.replaceChildren(...list.slice(0, 30).map(w => {
+    const req = mi.get(w.requested_by);
+    const stateLabel = { pending: "Awaiting votes", executed: "Paid out", rejected: "Stopped by members", cancelled: "Cancelled" }[w.status] || w.status;
+    const bar = el("i"); bar.style.width = prevBars.get(w.id) || "0%";
+    requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = `${Math.round(w.risk_score * 100)}%`; }));
+    const card = el("article", { class: `wd ${w.risk_level}${w.status !== "pending" ? " closed" : ""}`, "data-id": w.id },
+      el("div", { class: "top" }, el("span", { class: "amt" }, money(w.amount, cur)), el("span", { class: "state " + w.status }, stateLabel)),
+      el("div", { class: "who" }, `${req ? req.name : "Unknown"} (${req ? roleName(req.role) : ""}) to ${w.recipient_phone}${w.reason ? ", " + w.reason : ""}`),
+      el("div", { class: "risk" }, el("span", {}, `${w.risk_level[0].toUpperCase() + w.risk_level.slice(1)} risk`), el("span", { class: "bar" }, bar), el("span", { class: "mono" }, w.risk_score.toFixed(2))),
+      w.risk_reasons.length ? el("ul", { class: "reasons" }, w.risk_reasons.map(r => el("li", {}, r))) : null);
+    const tally = el("span", { class: "tally" }, el("b", {}, String(w.approvals.length)), ` of ${w.required_approvals} approvals`, w.rejections.length ? `, ${w.rejections.length} against` : "");
+    if (w.status === "pending") {
+      const voted = new Set([...w.approvals, ...w.rejections, w.requested_by]);
+      const eligible = state.group.members.filter(m => m.active && !voted.has(m.id));
+      const sel = el("select", { "aria-label": "Member voting" }, eligible.map(m => el("option", { value: m.id }, m.name)));
+      const vote = async decision => {
+        if (!sel.value) return;
+        try {
+          const r = await api(`/withdrawals/${w.id}/${decision}`, { method: "POST", body: { member_id: sel.value } });
+          toast(r.status === "executed" ? "Approved. The payment has been released." : r.status === "rejected" ? "Rejected. The withdrawal has been stopped." : "Vote recorded.");
+          await refreshLive(); runVerify();
+        } catch (e) { toast(e.message, true); }
+      };
+      const form = eligible.length
+        ? el("form", { onsubmit: e => e.preventDefault() }, sel,
+            el("button", { class: "btn small safe", type: "button", onclick: () => vote("approve") }, "Approve"),
+            el("button", { class: "btn small danger", type: "button", onclick: () => vote("reject") }, "Reject"))
+        : el("span", { class: "muted" }, "Everyone eligible has voted");
+      card.append(el("div", { class: "votes" }, tally, form));
+    } else {
+      card.append(el("div", { class: "votes" }, tally, el("span", { class: "muted" }, w.payout_reference ? `Ref ${w.payout_reference}` : ago(w.created_at))));
+    }
+    return card;
+  }));
+}
+
+/* hash chain */
+function renderChain() {
+  const box = $("#chain"); const mi = memberIndex(); const cur = state.group.currency;
+  const anchored = state.verify && state.verify.anchor_source === "blockchain" ? state.verify.anchored_entries : (state.group.last_anchored_entries || 0);
+  const broken = state.verify && !state.verify.valid ? state.verify.broken_at_seq : 0;
+  $("#chainSub").textContent = `${state.ledger.length} records, ${anchored} anchored on chain`;
+  if (!state.ledger.length) { box.replaceChildren(el("p", { class: "empty" }, "The first contribution starts this group's hash chain.")); return; }
+  const seen = state.seenSeq.get(state.groupId) || 0;
+  const items = state.ledger.slice(-16);
+  const kids = [];
+  items.forEach((e, i) => {
+    if (i) kids.push(el("span", { class: "link", "aria-hidden": "true" }));
+    const who = e.member_id && mi.get(e.member_id);
+    const cls = ["block", e.seq <= anchored ? "anch" : "", e.seq === broken ? "broken" : "", seen && e.seq > seen ? "fresh" : ""].join(" ");
+    kids.push(el("div", { class: cls, title: `Hash ${e.hash}\nPrevious ${e.prev_hash}` },
+      el("div", { class: "seq" }, el("span", {}, `#${e.seq} ${e.type}`), e.seq <= anchored ? el("span", { class: "a" }, "anchored") : el("span", {}, clock(e.created_at))),
+      el("div", { class: "amt" + (e.amount < 0 ? " out" : "") }, (e.amount < 0 ? "− " : "+ ") + money(Math.abs(e.amount), cur)),
+      el("div", { class: "who" }, who ? who.name : (e.reference || "")),
+      el("div", { class: "hash mono" }, short(e.hash, 16)),
+      el("div", { class: "prev mono" }, "prev " + short(e.prev_hash, 11))));
+  });
+  box.replaceChildren(...kids);
+  state.seenSeq.set(state.groupId, state.ledger[state.ledger.length - 1].seq);
+  if (!seen || items[items.length - 1].seq > seen) box.scrollLeft = box.scrollWidth;
+}
+
+/* members */
+function renderMembers() {
+  const box = $("#members"); const cur = state.group.currency; const c = contributedBy();
+  const ms = state.group.members;
+  if (!ms.length) { box.replaceChildren(el("p", { class: "empty" }, "Add the group's members to start recording contributions.")); return; }
+  box.replaceChildren(el("table", {},
+    el("thead", {}, el("tr", {}, el("th", {}, "Name"), el("th", {}, "Phone"), el("th", { class: "num" }, `Contributed (${cur})`))),
+    el("tbody", {}, ms.map(m => el("tr", {},
+      el("td", {}, m.name, el("div", { class: "role" }, roleName(m.role))),
+      el("td", { class: "mono" }, m.phone),
+      el("td", { class: "num" }, nf.format(c.get(m.id) || 0)))))));
+}
+
+/* activity log built from real ledger, withdrawal and anchor records */
+function renderLog() {
+  const mi = memberIndex(); const cur = state.group.currency; const ev = [];
+  for (const e of state.ledger) {
+    const who = e.member_id && mi.get(e.member_id);
+    ev.push({ t: e.created_at, cls: e.amount >= 0 ? "in" : "out",
+      text: e.amount >= 0 ? `${who ? who.name : "Member"} contributed ${money(e.amount, cur)}` : `${money(-e.amount, cur)} paid out to ${who ? who.name : "member"}'s request` });
+  }
+  for (const w of state.withdrawals) {
+    const who = mi.get(w.requested_by);
+    ev.push({ t: w.created_at, cls: w.risk_level === "high" ? "alert" : "", text: `${who ? who.name : "Member"} requested ${money(w.amount, cur)}${w.risk_level === "high" ? ", flagged high risk" : ""}` });
+  }
+  for (const a of state.anchors) ev.push({ t: a.created_at, cls: "chain", text: `Ledger anchored on chain at record ${a.entries}` });
+  ev.sort((a, b) => new Date(b.t) - new Date(a.t));
+  const log = $("#log");
+  if (!ev.length) { log.replaceChildren(el("li", { class: "empty" }, "Activity appears as members use the group.")); return; }
+  log.replaceChildren(...ev.slice(0, 40).map(x => el("li", {}, el("span", { class: "t mono" }, clock(x.t)), el("span", { class: "e " + x.cls }, x.text))));
+}
+
+function renderAnchors() {
+  const box = $("#anchors"); const sys = state.system;
+  $("#anchSub").textContent = sys && sys.contract ? `Contract ${short(sys.contract, 12)} on chain ${sys.chain_id}` : "";
+  if (!state.anchors.length) { box.replaceChildren(el("p", { class: "empty" }, "Anchors are written automatically after each new record.")); return; }
+  box.replaceChildren(el("table", {},
+    el("thead", {}, el("tr", {}, el("th", {}, "Records covered"), el("th", {}, "Ledger head"), el("th", {}, "Transaction"), el("th", { class: "num" }, "When"))),
+    el("tbody", {}, state.anchors.slice(0, 12).map(a => el("tr", {},
+      el("td", {}, String(a.entries)), el("td", { class: "mono" }, short(a.head, 18)), el("td", { class: "mono" }, short(a.tx_hash, 18)), el("td", { class: "num muted" }, ago(a.created_at)))))));
+}
+
+/* trust graph: real members, requests and votes */
+let graphAnim = 0;
+function drawGraph() {
+  const svg = $("#graph"); if (!svg) return;
+  cancelAnimationFrame(graphAnim);
+  const W = svg.clientWidth || 600, H = 340, cx = W / 2, cy = H / 2;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const ms = state.group.members.filter(m => m.active);
+  const c = contributedBy(); const total = Math.max(1, [...c.values()].reduce((a, b) => a + b, 0));
+  const R = Math.min(W / 2 - 120, H / 2 - 64);
+  const VAULT = 44;
+  const pos = new Map();
+  ms.forEach((m, i) => {
+    const a = (i / Math.max(1, ms.length)) * Math.PI * 2 - Math.PI / 2;
+    pos.set(m.id, { x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R, a });
+  });
+  const recent = state.withdrawals.slice(0, 12);
+  const threats = new Set(recent.filter(w => w.status === "pending" && w.risk_level === "high").map(w => w.requested_by));
+  const edges = sv("g"), votes = sv("g"), nodes = sv("g");
+  for (const w of recent) {
+    const p = pos.get(w.requested_by); if (!p) continue;
+    const mx = (p.x + cx) / 2 + (cy - p.y) * 0.18, my = (p.y + cy) / 2 + (p.x - cx) * 0.18;
+    // end the curve at the vault's edge, not its centre
+    const dx = mx - cx, dy = my - cy, dl = Math.hypot(dx, dy) || 1;
+    const ex = cx + dx / dl * (VAULT + 3), ey = cy + dy / dl * (VAULT + 3);
+    const cls = ["edge", w.risk_level, w.status === "pending" ? "pending" : w.status === "rejected" ? "rejected" : "done"].join(" ");
+    edges.append(sv("path", { class: cls, d: `M${p.x},${p.y} Q${mx},${my} ${ex},${ey}` }));
+    if (w.status === "pending") {
+      for (const id of w.approvals) { const q = pos.get(id); if (q) votes.append(sv("line", { class: "vote", x1: q.x, y1: q.y, x2: p.x, y2: p.y })); }
+      for (const id of w.rejections) { const q = pos.get(id); if (q) votes.append(sv("line", { class: "vote no", x1: q.x, y1: q.y, x2: p.x, y2: p.y })); }
+    }
+  }
+  const vault = sv("g", { class: "node vault" },
+    sv("circle", { class: "core", cx, cy, r: VAULT }),
+    sv("text", { x: cx, y: cy - 2, "text-anchor": "middle" }, "Group vault"),
+    sv("text", { class: "role", x: cx, y: cy + 13, "text-anchor": "middle" }, money(state.group.balance, state.group.currency)));
+  nodes.append(vault);
+  for (const m of ms) {
+    const p = pos.get(m.id);
+    const share = (c.get(m.id) || 0) / total;
+    const r = 18, circ = 2 * Math.PI * (r + 5);
+    const L = outwardLabel(p.a, p.x, p.y, r + 12);
+    const lx = L.x, anchor = L.anchor;
+    const g = sv("g", { class: "node" + (threats.has(m.id) ? " threat" : "") },
+      threats.has(m.id) ? sv("circle", { class: "halo", cx: p.x, cy: p.y, r: 18 }) : null,
+      sv("circle", { class: "share", cx: p.x, cy: p.y, r: r + 5, "stroke-dasharray": `${circ * share} ${circ}`, transform: `rotate(-90 ${p.x} ${p.y})`, opacity: share ? 0.9 : 0 }),
+      sv("circle", { class: "core", cx: p.x, cy: p.y, r }),
+      sv("text", { x: p.x, y: p.y + 4, "text-anchor": "middle" }, initials(m.name)),
+      sv("text", { x: lx, y: L.y1, "text-anchor": anchor }, clip(m.name, 18)),
+      sv("text", { class: "role", x: lx, y: L.y2, "text-anchor": anchor }, roleName(m.role)));
+    g.append(sv("title", {}, `${m.name}, ${roleName(m.role)}. ${Math.round(share * 100)}% of contributions.`));
+    nodes.append(g);
+  }
+  if (!ms.length) nodes.append(sv("text", { class: "role", x: cx, y: cy + 60, "text-anchor": "middle" }, "Members appear around the vault"));
+  svg.replaceChildren(edges, votes, nodes);
+}
+const initials = n => n.split(/\s+/).filter(Boolean).slice(0, 2).map(s => s[0].toUpperCase()).join("");
+
+/* ---------- dialogs ---------- */
+function fillSelects() {
+  const ms = state.group ? state.group.members.filter(m => m.active) : [];
+  for (const id of ["cMember", "wBy"]) {
+    const sel = $("#" + id); const keep = sel.value;
+    sel.replaceChildren(...ms.map(m => el("option", { value: m.id }, `${m.name} (${roleName(m.role)})`)));
+    if (keep && ms.some(m => m.id === keep)) sel.value = keep;
+  }
+}
+function openDialog(id) {
+  const d = $("#" + id);
+  $(".err", d).textContent = "";
+  if (id === "dlgWithdraw") {
+    const by = $("#wBy"); const m = state.group.members.find(x => x.id === by.value);
+    if (m && !$("#wTo").value) $("#wTo").value = m.phone;
+  }
+  d.showModal();
+}
+$("#newGroupBtn").addEventListener("click", () => openDialog("dlgGroup"));
+$("#wBy").addEventListener("change", () => {
+  const m = state.group && state.group.members.find(x => x.id === $("#wBy").value);
+  if (m) $("#wTo").value = m.phone;
+});
+for (const r of document.querySelectorAll('#dlgContrib input[name="method"]')) {
+  r.addEventListener("change", () => {
+    const cash = $('#dlgContrib input[name="method"]:checked').value === "cash";
+    $("#cRefField").classList.toggle("hidden", !cash);
+    $("#cRef").required = cash;
+  });
+}
+
+for (const form of document.querySelectorAll("dialog form")) {
+  form.addEventListener("submit", async e => {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    e.preventDefault();
+    const d = form.closest("dialog"); const err = $(".err", form);
+    const btn = form.querySelector('button[value="ok"]');
+    const fd = Object.fromEntries(new FormData(form));
+    err.textContent = ""; btn.disabled = true;
+    try {
+      switch (form.dataset.kind) {
+        case "group": {
+          const g = await api("/groups", { method: "POST", body: { name: fd.name, currency: fd.currency, approval_threshold: Number(fd.approval_threshold) } });
+          toast(`Group created: ${g.name}`); d.close(); form.reset();
+          await refreshGroups(); openGroup(g.id); break;
+        }
+        case "member": {
+          const m = await api(`/groups/${state.groupId}/members`, { method: "POST", body: { name: fd.name, phone: fd.phone, role: fd.role } });
+          toast(`Member added: ${m.name}`); d.close(); form.reset(); break;
+        }
+        case "contrib": {
+          const amount = Number(fd.amount);
+          if (fd.method === "cash") {
+            await api(`/groups/${state.groupId}/contributions`, { method: "POST", body: { member_id: fd.member_id, amount, reference: fd.reference } });
+            toast("Contribution recorded");
+          } else {
+            const r = await api(`/groups/${state.groupId}/contributions/mpesa`, { method: "POST", body: { member_id: fd.member_id, amount } });
+            toast(r.message);
+          }
+          d.close(); $("#cAmt").value = ""; $("#cRef").value = ""; break;
+        }
+        case "withdraw": {
+          const w = await api(`/groups/${state.groupId}/withdrawals`, { method: "POST", body: {
+            requested_by: fd.requested_by, amount: Number(fd.amount), recipient_phone: fd.recipient_phone, reason: fd.reason || "" } });
+          toast(w.risk_level === "high" ? "Withdrawal requested and flagged high risk" : "Withdrawal requested", w.risk_level === "high");
+          d.close(); form.reset(); break;
+        }
+      }
+      await refreshLive();
+      if (form.dataset.kind === "contrib" || form.dataset.kind === "withdraw") runVerify();
+    } catch (ex) {
+      if (ex instanceof AuthError) { location.reload(); return; }
+      err.textContent = ex.message;
+    } finally { btn.disabled = false; }
+  });
+}
+
+let resizeT;
+addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (state.view === "group" && state.group) drawGraph(); else drawNetmap(); }, 150); });
+
+boot();
+})();
+</script>
+</body>
+</html>

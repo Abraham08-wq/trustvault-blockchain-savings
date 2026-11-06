@@ -1,0 +1,54 @@
+# Builds the ChamaChain member app for Android in the cloud, for free, on every change to mobile/.
+# Download the finished app from the run's "Artifacts" section (chamachain-member-apk).
+name: Member app
+
+on:
+  push:
+    paths:
+      - "mobile/**"
+      - ".github/workflows/member-app.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Prepare Android project
+        run: bash tool/prepare_android.sh
+
+      - name: Install packages
+        run: flutter pub get
+
+      - name: Check code
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build app
+        run: flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chamachain-member-apk
+          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30

@@ -1,0 +1,13 @@
+.env
+*.log
+bin/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/lib/
+ai-service/.venv/
+__pycache__/
+.pytest_cache/
+.testnet-wallet
+.env.*
+!.env.example

@@ -1,0 +1,64 @@
+name: chamachain
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chama
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chama_dev_password}
+      POSTGRES_DB: chamachain
+    ports:
+      - "127.0.0.1:47432:5432"   # unusual host port to avoid clashing with other systems
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chama -d chamachain"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Local blockchain for development (Foundry's Anvil). Free and instant.
+  # Its state is saved to a volume, so contracts and anchors survive restarts.
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:stable
+    restart: unless-stopped
+    user: "0:0"
+    entrypoint: ["anvil", "--host", "0.0.0.0", "--chain-id", "31337", "--state", "/data/anvil-state.json", "--state-interval", "5"]
+    stop_signal: SIGINT
+    stop_grace_period: 15s
+    volumes:
+      - anvildata:/data
+    ports:
+      - "127.0.0.1:47545:8545"
+
+  ai:
+    build: ./ai-service
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:47800:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://chama:${POSTGRES_PASSWORD:-chama_dev_password}@postgres:5432/chamachain?sslmode=disable
+      AI_SERVICE_URL: http://ai:8000
+      CHAIN_RPC_URL: ${CHAIN_RPC_URL:-http://anvil:8545}
+    ports:
+      - "${API_BIND:-127.0.0.1}:47080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  anvildata:
